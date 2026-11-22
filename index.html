@@ -346,7 +346,12 @@ $('#days').onchange=e=>{days=+e.target.value; render()};
 function needKey(){
   $('#grid').innerHTML=`<div class="msg"><b>Add your YouTube Data API key</b><br>One-time setup. The key stays in this browser only. Create one free at Google Cloud Console → enable “YouTube Data API v3” → Credentials → API key.
   <input id="kin" placeholder="Paste API key" value="${esc(apiKey)}"><button id="ksave">Save and continue</button></div>`;
-  $('#ksave').onclick=()=>{apiKey=$('#kin').value.trim(); store.set('yt_key',apiKey); if(sel) select(sel)};
+  $('#ksave').onclick=()=>{
+    apiKey=$('#kin').value.trim(); store.set('yt_key',apiKey);
+    if(!apiKey){$('#grid').innerHTML='<div class="msg"><b>No key entered.</b><br>Paste your API key and save again.</div>';return}
+    if(sel) select(sel);
+    else $('#grid').innerHTML='<div class="msg"><b>Key saved.</b><br>Now pick a channel or click “Open all” on a category in the left list.</div>';
+  };
 }
 $('#key').onclick=needKey;
 buildList();
