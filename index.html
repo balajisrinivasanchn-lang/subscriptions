@@ -330,15 +330,15 @@ function render(){
     <div class="meta"><b>${esc(v.title)}</b><small>${esc(v.ch)} · ${v.date.toLocaleDateString(undefined,{day:'numeric',month:'short'})}</small></div></button>`).join('')
     :'<div class="msg">Nothing new in this range. Try a longer time range or switch the type filter.</div>';
 }
-function play(src,title,vertical){
+function play(src,title,vertical,url){
   $('#player').style.display='block'; $('#pbox').className='box'+(vertical?' v':'');
   $('#pbox').innerHTML=`<iframe src="${src}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
-  $('#ptitle').textContent=title||''; $('#main').scrollTo({top:0,behavior:'smooth'});
+  $('#ptitle').innerHTML=esc(title||'')+(url?` &nbsp;<a href="${esc(url)}" target="_blank" rel="noopener" style="color:var(--acc);font-weight:600">Open on YouTube (Premium, no ads)</a>`:''); $('#main').scrollTo({top:0,behavior:'smooth'});
 }
-$('#grid').onclick=e=>{const v=e.target.closest('.v'); if(v) play(`https://www.youtube.com/embed/${v.dataset.id}?autoplay=1&rel=0`,v.dataset.t,v.dataset.s==='1')};
+$('#grid').onclick=e=>{const v=e.target.closest('.v'); if(v) play(`https://www.youtube.com/embed/${v.dataset.id}?autoplay=1&rel=0`,v.dataset.t,v.dataset.s==='1','https://www.youtube.com/'+(v.dataset.s==='1'?'shorts/':'watch?v=')+v.dataset.id)};
 $('#live').onclick=async()=>{
   if(!apiKey) return needKey();
-  try{const m=await resolve(sel.h); play(`https://www.youtube.com/embed/live_stream?channel=${m.id}&autoplay=1`,'Live stream (shows only if the channel is live now)',false)}catch(e){alert(e.message)}
+  try{const m=await resolve(sel.h); play(`https://www.youtube.com/embed/live_stream?channel=${m.id}&autoplay=1`,'Live stream (shows only if the channel is live now)',false,'https://www.youtube.com/'+sel.h+'/live')}catch(e){alert(e.message)}
 };
 $('#types').onclick=e=>{const b=e.target.closest('button'); if(!b)return; type=b.dataset.t;
   document.querySelectorAll('#types button').forEach(x=>x.classList.toggle('on',x===b)); render()};
