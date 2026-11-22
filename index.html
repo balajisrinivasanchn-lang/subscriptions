@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Subscriptions</title>
+<style>
+:root{--bg:#f4f5f7;--side:#fff;--card:#fff;--ink:#16181d;--mute:#6b7280;--line:#e3e5ea;--acc:#1f6feb;--accink:#fff;--sel:#e8f0fe}
+@media (prefers-color-scheme:dark){:root{--bg:#101318;--side:#171b22;--card:#1c2129;--ink:#e8eaee;--mute:#8b93a1;--line:#2a303a;--acc:#5aa2ff;--accink:#08121f;--sel:#22314a}}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);display:flex}
+#side{width:290px;flex:none;background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;height:100%}
+#side header{padding:14px;border-bottom:1px solid var(--line)}
+#side h1{font-size:16px;margin:0 0 10px}
+input,select,button{font:inherit;color:inherit}
+#q{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+#list{overflow:auto;flex:1;padding:6px 0 20px}
+details{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;padding:9px 14px;font-weight:600;display:flex;justify-content:space-between;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary .n{color:var(--mute);font-weight:400}
+.cat{border:0;background:none;color:var(--acc);cursor:pointer;font-size:12px;padding:0 0 0 8px}
+.ch{display:flex;align-items:center;gap:10px;padding:6px 14px 6px 22px;cursor:pointer;border:0;background:none;width:100%;text-align:left}
+.ch:hover{background:var(--sel)}
+.ch.on,summary.on{background:var(--sel)}
+.av{width:26px;height:26px;border-radius:50%;background:var(--line);flex:none;object-fit:cover;display:grid;place-items:center;font-size:11px;color:var(--mute)}
+.ch span.t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#main{flex:1;min-width:0;height:100%;overflow:auto;display:flex;flex-direction:column}
+#bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:12px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+#title{font-size:18px;font-weight:700;margin-right:auto}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--card);padding:6px 12px;cursor:pointer}
+.seg button.on{background:var(--acc);color:var(--accink)}
+select{padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+#player{display:none;padding:16px 18px 0}
+#player .box{background:#000;border-radius:10px;overflow:hidden;margin:0 auto;aspect-ratio:16/9;max-height:62vh;max-width:100%}
+#player .box.v{aspect-ratio:9/16;height:70vh;max-height:70vh}
+#player iframe{width:100%;height:100%;border:0;display:block}
+#ptitle{margin:8px auto 0;font-weight:600;text-align:center}
+#grid{padding:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.v{cursor:pointer;background:var(--card);border-radius:10px;overflow:hidden;border:1px solid var(--line);text-align:left;padding:0}
+.v:hover{border-color:var(--acc)}
+.th{position:relative;aspect-ratio:16/9;background:#000}
+.th img{width:100%;height:100%;object-fit:cover;display:block}
+.dur{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.8);color:#fff;font-size:11px;padding:1px 5px;border-radius:4px}
+.shortb{position:absolute;left:6px;top:6px;background:var(--acc);color:var(--accink);font-size:11px;padding:1px 6px;border-radius:4px;font-weight:600}
+.meta{padding:8px 10px 10px}
+.meta b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:600}
+.meta small{color:var(--mute)}
+.msg{padding:40px 18px;color:var(--mute);max-width:560px}
+.msg b{color:var(--ink)}
+.msg input{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--card);margin:10px 0}
+.msg button{padding:8px 14px;border-radius:8px;border:0;background:var(--acc);color:var(--accink);cursor:pointer;font-weight:600}
+#menu{display:none}
+@media (max-width:760px){
+ body{display:block;overflow:auto}
+ #side{width:100%;height:auto;max-height:42vh;position:relative}
+ #main{height:auto;overflow:visible}
+}
+</style>
+</head>
+<body>
+<aside id="side">
+ <header><h1>My Subscriptions</h1><input id="q" placeholder="Search channels" aria-label="Search channels"></header>
+ <div id="list"></div>
+</aside>
+<main id="main">
+ <div id="bar">
+  <div id="title">Select a channel or category</div>
+  <div class="seg" id="types"><button data-t="all" class="on">All</button><button data-t="short">Shorts</button><button data-t="video">Videos</button></div>
+  <select id="days" aria-label="Time range"><option value="3">Last 3 days</option><option value="7" selected>Last 7 days</option><option value="30">Last 30 days</option><option value="3650">Any time</option></select>
+  <button id="live" class="seg" style="display:none;padding:6px 12px;cursor:pointer;background:var(--card)">Watch live</button>
+  <button id="key" class="seg" style="padding:6px 12px;cursor:pointer;background:var(--card)">API key</button>
+ </div>
+ <section id="player"><div class="box" id="pbox"></div><div id="ptitle"></div></section>
+ <div id="grid"></div>
+</main>
+
+<script>
+// Category | Name | @handle  (merged from your Live Channels + Shorts sheets, duplicates removed)
+const RAW = `
+News|Puthiya Thalaimurai|PuthiyaThalaimuraiTV
+News|Thanthi TV|ThanthiTV
+News|Sun News|SunNews
+News|Polimer News|PolimerNews
+News|News18 Tamil Nadu|News18TamilNadu
+News|News7 Tamil|News7Tamil
+News|Velicham TV|VelichamTV
+News|Lotus News|LotusNews
+News|Malai Murasu TV|MalaiMurasuTV
+News|Makkal TV|MakkalTV
+News|NDTV|ndtv
+News|India Today|indiatoday
+News|Times Now|TimesNow
+News|Republic World|RepublicWorld
+News|CNN-News18|CNNnews18
+News|WION|WION
+News|First Post|Firstpost
+News|Business Line|HinduBusinessLine
+News|ABC News|ABCNews
+News|CNBC|CNBC
+News|BBC News|BBCNews
+News|Sky News|SkyNews
+News|Al Jazeera English|AlJazeeraEnglish
+News|France 24 English|FRANCE24English
+News|TRT World|TRTWorld
+News|Global News|GlobalNews
+News|CBC News|CBCNews
+News|IBC Tamil|IBCTamil
+News|Deepam TV|DeepamTV
+News|Dan Tamil Oli|DanTamilOli
+News|Shakthi TV Tamil|ShakthiTV
+News|Moneycontrol|moneycontrol
+Entertainment|Sun TV|SunTV
+Entertainment|Vijay Television|vijaytelevision
+Entertainment|Zee Tamil|ZeeTamil
+Entertainment|Colors Tamil|ColorsTamil
+Entertainment|Behindwoods|BehindwoodsTV
+Entertainment|Galatta|GalattaOfficial
+Entertainment|Sun Music|SunMusic
+Entertainment|Sun Life|SunLife
+Entertainment|Adithya TV|AdithyaTV
+Entertainment|Galatta Tamil|GalattaTamil
+Entertainment|Behindwoods Ice|BehindwoodsICE
+Entertainment|The Book Show Anandhi|TheBookShowbyrjananthi
+Entertainment|Raj Files|rajfilestamil
+Entertainment|Gen EW|gen.e_media
+Entertainment|NexAE Movies|Nexaerecaps
+Entertainment|SunNxt|SunNXTshorts
+Comedy|Black Sheep|BlackSheep
+Comedy|Micset|Micset
+Comedy|Parithabangal|Parithabangal
+Comedy|Eruma Saani|ErumaSaani
+Comedy|Temple Monkeys|TempleMonkeys
+Comedy|Black Sheep Tamil|BlackSheepTamil
+Comedy|Micset Tamil|MicsetTamil
+Comedy|Parithabangal Tamil|ParithabangalTamil
+Comedy|API Tamil Comedy|apitamilcomedy
+Comedy|Just For Laughs|gags
+Technology|Tech Boss|TechBossYT
+Technology|Geeky Ranjit|geekyranjit
+Technology|Technical Guruji|TechnicalGuruji
+Technology|Trakin Tech|TrakinTech
+Technology|C4ETech Tamil|C4ETech
+Technology|Smart Tamil|SmartTamil
+Technology|Mrwhosetheboss|Mrwhosetheboss
+Technology|Beebom|BeebomCo
+Technology|Tech Burner|TechBurner
+Technology|Guiding Tech|GuidingTech
+Technology|Marques Brownlee|mkbhd
+Technology|Linus Tech Tips|LinusTechTips
+Technology|Unbox Therapy|unboxtherapy
+Technology|TechLinked|TechLinked
+Technology|OpenAI|OpenAI
+Technology|Google|Google
+Technology|Microsoft Developer|MicrosoftDeveloper
+Technology|NVIDIA|NVIDIA
+Technology|Kevin Stratvert|KevinStratvert
+Technology|Julian Goldie|JulianGoldieSEO
+Technology|Techwiser|techwiser
+Technology|Tech Girl|anjanagowtham
+Technology|The Tool Finder|toolfinderhq
+Technology|TechRepublic|techrepublic
+Technology|Intellipaat|Intellipaat
+Business|CNBC-TV18|cnbctv18
+Business|ET Now|ETNow
+Business|Bloomberg Quint|BloombergQuint
+Business|Zee Business|ZeeBusiness
+Business|Bloomberg Television|BloombergTV
+Business|Forbes|Forbes
+Business|Yahoo Finance|YahooFinance
+Educational|Unacademy|unacademy
+Educational|Study IQ|StudyIQeducation
+Educational|Khan GS Research|KhanGSResearch
+Educational|WifiStudy|wifistudy
+Educational|ExamFear Education|ExamFearEducation
+Educational|Khan Academy|khanacademy
+Educational|CrashCourse|crashcourse
+Educational|MIT OpenCourseWare|mitocw
+Educational|Stanford|stanford
+Sports|Star Sports India|StarSportsIndia
+Sports|Sony Sports Network|SonySportsNetwork
+Sports|Sports Tak|SportsTak
+Sports|ESPN India|ESPNIndia
+Sports|NBA|NBA
+Sports|FIFA|FIFA
+Sports|ICC|ICC
+Sports|WWE|WWE
+Sports|UFC|UFC
+AI|DeepLearningAI|DeepLearningAI
+AI|Two Minute Papers|TwoMinutePapers
+AI|AI Explained|AIExplainedOfficial
+AI|Matt Wolfe|mreflow
+AI|Your AI Workflow|youraiworkflow
+AI|The Next New Thing AI|TheNextNewThingAI
+AI|Vaibhav Sisinty|vaibhavsisinty
+AI|Sapien Geno|sapiengeno
+AI|AI Revolution X|airevolutionx
+AI|Simplilearn|SimplilearnOfficial
+AI|Aish Reganti|aish_reganti
+AI|Futurepedia|Futurepedia
+AI|All About AI|AllAboutAI
+AI|AI Coach John|aicoachjohn
+Religious|Sri Sankara TV|SriSankaraTV
+Religious|Shankara TV|SriSankara
+Religious|SVBC TTD|SVBCTTD
+Religious|Amrita TV Tamil|AmritaTV
+Religious|Dushyanth Sridhar|RamayanaForUs
+Religious|Kadhai Pokkisham|KadhaiPokkisham
+Religious|Karthik Narrates|karthiknarrates
+Religious|Religious Stories Islam|ReligiousStoryTV
+Religious|Testament Tales|TestamentTalesAnimated
+Religious|Temple Stories|templestories-s4i
+Religious|Bible Uncovered|BibleUncovered-abc
+Religious|Bible Story Verse|3DBibleStoryVerse
+Religious|Epic Unveiled|Epic_unveiled
+Religious|The Bible|TheBibleStoriesYT
+Religious|Truth of Dharma|TruthofDharma0912
+Religious|Bible Stories|Bible_stories_Explained25
+Religious|Beyond Our Thinking|beyondourthiinking
+Religious|Bible Animation|BibleBestAnimation
+Religious|Sadhguru|Sadhguru
+Religious|Heartfulness|heartfulness
+Tamil|IBC Tamil TV|IBCTamilTV
+Tamil|Tamil Vision International|TamilVision
+Tamil|Athavan TV|ATHAVANTV
+Tamil|OneIndia Tamil|OneindiaTamil
+Tamil|Kanakanum Payanangal|KanakaanumPayanangal
+Tamil|Kaalappayanam|KaalapayanamTamil
+Tamil|Tamil Odyssey|TAMILODYSSEY-i6o
+Tamil|Tamil Audio Books|TamilVoiceReads
+Science & Space|Vaanveli|VaanVeli
+Science & Space|ISRO|isro
+Science & Space|SpaceX|SpaceX
+Science & Space|NASA|NASA
+Science & Space|National Geographic|NatGeo
+Science & Space|Discovery|Discovery
+Government|DD India|DDIndia
+Government|PMO India|PMOIndia
+`.trim().split('\n').map(l=>{const [c,n,h]=l.split('|');return {c,n,h:'@'+h}});
+
+const CATS = {}; RAW.forEach(ch=>(CATS[ch.c]=CATS[ch.c]||[]).push(ch));
+const $ = s=>document.querySelector(s);
+const API='https://www.googleapis.com/youtube/v3';
+const store = {get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}, set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let apiKey = store.get('yt_key','');
+const meta = store.get('yt_meta',{});          // handle -> {id, uploads, thumb}
+const cache = {};                              // handle -> videos[]
+let sel = null, type='all', days=7, vids=[];
+
+// ---------- sidebar ----------
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function buildList(filter=''){
+  const f=filter.toLowerCase(); let html='';
+  for(const [c,chs] of Object.entries(CATS)){
+    const m=chs.filter(x=>!f||x.n.toLowerCase().includes(f)||c.toLowerCase().includes(f));
+    if(!m.length) continue;
+    html+=`<details ${f?'open':''}><summary data-cat="${esc(c)}"><span>${esc(c)} <span class="n">${m.length}</span></span><button class="cat" data-cat="${esc(c)}">Open all</button></summary>`;
+    m.forEach(x=>{const th=meta[x.h]&&meta[x.h].thumb;
+      html+=`<button class="ch" data-h="${esc(x.h)}">${th?`<img class="av" src="${esc(th)}" alt="">`:`<span class="av">${esc(x.n[0])}</span>`}<span class="t">${esc(x.n)}</span></button>`});
+    html+='</details>';
+  }
+  $('#list').innerHTML=html||'<div class="msg">No channels match.</div>';
+  markSel();
+}
+function markSel(){
+  document.querySelectorAll('.ch').forEach(b=>b.classList.toggle('on',sel&&sel.kind==='ch'&&sel.h===b.dataset.h));
+}
+$('#q').oninput=e=>buildList(e.target.value);
+$('#list').onclick=e=>{
+  const b=e.target.closest('.cat'); if(b){e.preventDefault();e.stopPropagation();select({kind:'cat',c:b.dataset.cat});return}
+  const c=e.target.closest('.ch'); if(c){select({kind:'ch',h:c.dataset.h})}
+};
+
+// ---------- API ----------
+async function api(path,params){
+  const u=new URL(API+path); Object.entries({...params,key:apiKey}).forEach(([k,v])=>u.searchParams.set(k,v));
+  const r=await fetch(u); const j=await r.json();
+  if(!r.ok) throw new Error((j.error&&j.error.message)||r.status);
+  return j;
+}
+async function resolve(h){
+  if(meta[h]) return meta[h];
+  const j=await api('/channels',{part:'contentDetails,snippet',forHandle:h});
+  if(!j.items||!j.items.length) throw new Error('Channel not found: '+h);
+  const it=j.items[0];
+  meta[h]={id:it.id,uploads:it.contentDetails.relatedPlaylists.uploads,thumb:(it.snippet.thumbnails.default||{}).url};
+  store.set('yt_meta',meta); return meta[h];
+}
+function secs(iso){const m=/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(iso||'')||[];return (+m[1]||0)*3600+(+m[2]||0)*60+(+m[3]||0)}
+function fmt(s){const h=Math.floor(s/3600),m=Math.floor(s%3600/60),r=s%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(r).padStart(2,'0')}
+async function channelVideos(ch,n){
+  if(cache[ch.h]) return cache[ch.h];
+  const m=await resolve(ch.h);
+  const pl=await api('/playlistItems',{part:'contentDetails',playlistId:m.uploads,maxResults:n});
+  const ids=pl.items.map(i=>i.contentDetails.videoId).join(',');
+  if(!ids) return cache[ch.h]=[];
+  const v=await api('/videos',{part:'contentDetails,snippet',id:ids});
+  return cache[ch.h]=v.items.map(i=>({id:i.id,title:i.snippet.title,ch:ch.n,date:new Date(i.snippet.publishedAt),dur:secs(i.contentDetails.duration),
+    thumb:(i.snippet.thumbnails.medium||i.snippet.thumbnails.default).url}));
+}
+
+// ---------- select + render ----------
+async function select(s){
+  sel=s; markSel(); $('#player').style.display='none'; $('#pbox').innerHTML='';
+  document.querySelectorAll('summary').forEach(x=>x.classList.toggle('on',s.kind==='cat'&&x.dataset.cat===s.c));
+  $('#live').style.display=s.kind==='ch'?'':'none';
+  const list=s.kind==='ch'?RAW.filter(x=>x.h===s.h):CATS[s.c];
+  $('#title').textContent=s.kind==='ch'?list[0].n:s.c+' (all channels)';
+  if(!apiKey){return needKey()}
+  $('#grid').innerHTML='<div class="msg">Loading…</div>';
+  try{
+    const n=s.kind==='ch'?30:12, out=[]; const errs=[];
+    for(let i=0;i<list.length;i+=5){
+      await Promise.all(list.slice(i,i+5).map(c=>channelVideos(c,n).then(v=>out.push(...v)).catch(e=>errs.push(e.message))));
+    }
+    vids=out.sort((a,b)=>b.date-a.date);
+    if(!vids.length&&errs.length) throw new Error(errs[0]);
+    render(); buildList($('#q').value);
+  }catch(e){
+    $('#grid').innerHTML=`<div class="msg"><b>Couldn’t load videos.</b><br>${esc(e.message)}<br>Check that the YouTube Data API v3 is enabled for your key.</div>`;
+  }
+}
+function render(){
+  const cutoff=Date.now()-days*864e5;
+  const f=vids.filter(v=>v.date>=cutoff&&(type==='all'||(type==='short')===(v.dur<=60)));
+  $('#grid').innerHTML=f.length?f.map(v=>`<button class="v" data-id="${v.id}" data-s="${v.dur<=60?1:0}" data-t="${esc(v.title)}">
+    <div class="th"><img loading="lazy" src="${esc(v.thumb)}" alt="">${v.dur<=60?'<span class="shortb">Short</span>':''}<span class="dur">${fmt(v.dur)}</span></div>
+    <div class="meta"><b>${esc(v.title)}</b><small>${esc(v.ch)} · ${v.date.toLocaleDateString(undefined,{day:'numeric',month:'short'})}</small></div></button>`).join('')
+    :'<div class="msg">Nothing new in this range. Try a longer time range or switch the type filter.</div>';
+}
+function play(src,title,vertical){
+  $('#player').style.display='block'; $('#pbox').className='box'+(vertical?' v':'');
+  $('#pbox').innerHTML=`<iframe src="${src}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  $('#ptitle').textContent=title||''; $('#main').scrollTo({top:0,behavior:'smooth'});
+}
+$('#grid').onclick=e=>{const v=e.target.closest('.v'); if(v) play(`https://www.youtube.com/embed/${v.dataset.id}?autoplay=1&rel=0`,v.dataset.t,v.dataset.s==='1')};
+$('#live').onclick=async()=>{
+  if(!apiKey) return needKey();
+  try{const m=await resolve(sel.h); play(`https://www.youtube.com/embed/live_stream?channel=${m.id}&autoplay=1`,'Live stream (shows only if the channel is live now)',false)}catch(e){alert(e.message)}
+};
+$('#types').onclick=e=>{const b=e.target.closest('button'); if(!b)return; type=b.dataset.t;
+  document.querySelectorAll('#types button').forEach(x=>x.classList.toggle('on',x===b)); render()};
+$('#days').onchange=e=>{days=+e.target.value; render()};
+function needKey(){
+  $('#grid').innerHTML=`<div class="msg"><b>Add your YouTube Data API key</b><br>One-time setup. The key stays in this browser only. Create one free at Google Cloud Console → enable “YouTube Data API v3” → Credentials → API key.
+  <input id="kin" placeholder="Paste API key" value="${esc(apiKey)}"><button id="ksave">Save and continue</button></div>`;
+  $('#ksave').onclick=()=>{apiKey=$('#kin').value.trim(); store.set('yt_key',apiKey); if(sel) select(sel)};
+}
+$('#key').onclick=needKey;
+buildList();
+if(!apiKey) needKey();
+</script>
+</body>
+</html>
